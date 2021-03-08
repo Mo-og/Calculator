@@ -48,12 +48,13 @@ public class MainActivity extends AppCompatActivity {
             resultField.setText("0");
         else
             resultField.setText(text.substring(0, text.length() - 1));
-        if (text.length() < 9) {
+        if (text.length() <= 9) {
             powerButtons(true, true);
-            if (text.length() <= 4){
+            if (text.length() <= 4) {
                 findViewById(R.id.button_multiply).setEnabled(true);
                 findViewById(R.id.button_plus).setEnabled(true);
-        }}
+            }
+        }
     }
 
     public void onDot(View view) {
@@ -64,7 +65,8 @@ public class MainActivity extends AppCompatActivity {
 
     // обработка нажатия на числовую кнопку
     public void onNumberClick(View view) {
-        String result = resultField.getText().toString();
+        double result = Double.parseDouble(resultField.getText().toString());
+        dotButton.setEnabled(!resultField.getText().toString().contains(","));
 
         if (isShownResult) {
             isShownResult = false;
@@ -77,18 +79,17 @@ public class MainActivity extends AppCompatActivity {
                 dotButton.setEnabled(true);
             }
 
-        if (result.length() >= 3) {
-            findViewById(R.id.button_multiply).setEnabled(false);
-            if (result.length() >= 8)
-                powerButtons(false, true);
-        }
-        if (!Objects.equals(lastOperation, "+") && !Objects.equals(lastOperation, "*") && !(result.length() >= 8))
-            powerButtons(true, true);
-        if (Objects.equals(lastOperation, "*") && resultField.getText().toString().length() > 3)
+
+        powerButtons(!Objects.equals(lastOperation, "+")
+                && !Objects.equals(lastOperation, "*")
+                && (result <= 99999999), true);
+
+        if ((Objects.equals(lastOperation, "*") && result > 999) || result >= 9999999)
             powerButtons(false, true);
+
         Button button = (Button) view;
-        if (!result.startsWith("0,")
-                && result.startsWith("0"))
+        if (!resultField.getText().toString().startsWith("0,")
+                && resultField.getText().toString().startsWith("0"))
             resultField.setText(button.getText());
         else
             resultField.append(button.getText());
@@ -111,7 +112,8 @@ public class MainActivity extends AppCompatActivity {
         String operation = button.getText().toString();
 
         if ((Objects.equals(operation, "*") && resultNum.toString().length() > 4)
-                || (Objects.equals(operation, "+") && resultNum.toString().length() > 5)) {
+                || (Objects.equals(operation, "+") && resultNum.toString().length() > 7)
+                || resultNum >= 9999999) {
             powerButtons(false, true);
             findViewById(R.id.button_multiply).setEnabled(false);
             findViewById(R.id.button_plus).setEnabled(false);
@@ -122,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
         // если меняем операнд, не изменяя числа ( [+] -> [*] например), не применяем дейсвие
         if (isShownResult && getNumFromField() != 0.0) {
             lastOperation = operation;
+            if (!Objects.equals(operation, "+") && !Objects.equals(operation, "*")&& (getNumFromField() <= 99999999))
+                powerButtons(true, true);
             return;
         }
         isShownResult = true;
