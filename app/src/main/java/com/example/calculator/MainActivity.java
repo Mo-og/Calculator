@@ -61,8 +61,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void onDot(View view) {
         dotButton.setEnabled(false);
+        if (resultField.getText().toString().contains(",")) return;
         resultField.append(",");
-        isShownResult=false;
+        isShownResult = false;
     }
 
 
@@ -170,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             switch (lastOperation) {
                 case "=":
+                    resultNum = number;
                     break;
                 case "/":
                     if (number == 0) {
