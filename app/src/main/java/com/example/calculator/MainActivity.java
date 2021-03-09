@@ -72,10 +72,11 @@ public class MainActivity extends AppCompatActivity {
 
         // если отображен результат, то перезаписываем
         if (isShownResult) {
+            if (lastOperation.equals("="))
+                onClear(null);
             isShownResult = false;
             resultField.setText(button.getText());
             dotButton.setEnabled(true);
-
             return;
         }
 
