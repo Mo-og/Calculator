@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
             resultField.setText(text.substring(0, text.length() - 1));
         if (text.length() < 9) {
             powerButtons(true, true);
-            if (text.length() <= 4) {
+            if (text.length() < 5) {
                 findViewById(R.id.button_multiply).setEnabled(true);
                 findViewById(R.id.button_plus).setEnabled(true);
             }
@@ -81,14 +81,14 @@ public class MainActivity extends AppCompatActivity {
 
         String result = resultField.getText().toString();
 
-        if (result.length() >= 4) {
+        //ограничиваем возможность умножать/складывать длинные числа чтобы ответ поместился на экране
+        if (result.length() > 3) {
             if (dotButton.isEnabled())
                 findViewById(R.id.button_multiply).setEnabled(false);
             if (result.length() >= 8 || Objects.equals(lastOperation, "*"))
                 powerButtons(false, true);
         }
-
-        if (!Objects.equals(lastOperation, "+") && !Objects.equals(lastOperation, "*") && !(result.length() >= 8))
+        if (!Objects.equals(lastOperation, "+") && !Objects.equals(lastOperation, "*") && !(result.length() >= 8) && resultNum <= 99999)
             powerButtons(true, true);
 
         //если в поле [0] - заменяем его, если [0,] - дописываем
@@ -126,8 +126,8 @@ public class MainActivity extends AppCompatActivity {
 
         isShownResult = true;
 
-        if ((Objects.equals(operation, "*") && resultNum.toString().length() > 4)
-                || (Objects.equals(operation, "+") && resultNum.toString().length() > 5)) {
+        if ((Objects.equals(operation, "*") && resultNum >= 9999)
+                || (Objects.equals(operation, "+") && resultNum >= 99999)) {
             powerButtons(false, true);
             findViewById(R.id.button_multiply).setEnabled(false);
             findViewById(R.id.button_plus).setEnabled(false);
@@ -196,10 +196,14 @@ public class MainActivity extends AppCompatActivity {
         } else {
             DecimalFormat formatter = new DecimalFormat("#.####");
             String result = formatter.format(resultNum);
-            if(!resultNum.toString().replace(".",",").equals(result))
-                result="≈"+result;
+            if (!resultNum.toString().replace(".", ",").equals(result))
+                result = "≈" + result;
             resultField.setText(result);
         }
+
+        findViewById(R.id.button_multiply).setEnabled(resultNum <= 99999);
+        findViewById(R.id.button_plus).setEnabled(resultNum <= 99999);
+
         isShownResult = true;
     }
 
