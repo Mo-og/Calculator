@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.text.DecimalFormat;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
@@ -17,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
     Button dotButton; // ссылка на кнопку десятичной точки
     Double resultNum = 0.0; // фактический ответ (результат)
     boolean isShownResult = false; // служебная переменная для выбора логики обработки тектового поля
+    boolean isNewOperation = false; // служебная переменная для выбора логики обработки нажатия клавиш
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
             resultField.setText("0");
         else
             resultField.setText(text.substring(0, text.length() - 1));
-        if (text.length() <= 9) {
+        if (text.length() < 9) {
             powerButtons(true, true);
             if (text.length() <= 4) {
                 findViewById(R.id.button_multiply).setEnabled(true);
@@ -65,34 +67,38 @@ public class MainActivity extends AppCompatActivity {
 
     // обработка нажатия на числовую кнопку
     public void onNumberClick(View view) {
-        double result = Double.parseDouble(resultField.getText().toString());
-        dotButton.setEnabled(!resultField.getText().toString().contains(","));
-
-        if (isShownResult) {
-            isShownResult = false;
-            resultField.setText("");
-            if (Objects.equals(lastOperation, "=")) resultNum = 0.0;
-        }
-        if (lastOperation != null && lastActiveOperandButton != null)
-            if (!lastOperation.contentEquals(lastActiveOperandButton.getText())) {
-                resultField.setText("");
-                dotButton.setEnabled(true);
-            }
-
-
-        powerButtons(!Objects.equals(lastOperation, "+")
-                && !Objects.equals(lastOperation, "*")
-                && (result <= 99999999), true);
-
-        if ((Objects.equals(lastOperation, "*") && result > 999) || result >= 9999999)
-            powerButtons(false, true);
 
         Button button = (Button) view;
-        if (!resultField.getText().toString().startsWith("0,")
-                && resultField.getText().toString().startsWith("0"))
+
+        // если отображен результат, то перезаписываем
+        if (isShownResult) {
+            isShownResult = false;
+            resultField.setText(button.getText());
+            dotButton.setEnabled(true);
+
+            return;
+        }
+
+        String result = resultField.getText().toString();
+
+        if (result.length() >= 4) {
+            if (dotButton.isEnabled())
+                findViewById(R.id.button_multiply).setEnabled(false);
+            if (result.length() >= 8 || Objects.equals(lastOperation, "*"))
+                powerButtons(false, true);
+        }
+
+        if (!Objects.equals(lastOperation, "+") && !Objects.equals(lastOperation, "*") && !(result.length() >= 8))
+            powerButtons(true, true);
+
+        //если в поле [0] - заменяем его, если [0,] - дописываем
+        if (!result.startsWith("0,")
+                && result.startsWith("0"))
             resultField.setText(button.getText());
         else
             resultField.append(button.getText());
+
+        dotButton.setEnabled(!result.contains(","));
 
     }
 
@@ -104,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
             lastActiveOperandButton.setEnabled(true);
             lastActiveOperandButton.setBackgroundColor(getResources().getColor(R.color.button_operand, getTheme()));
         }
+
         Button button = (Button) view;
         button.setBackgroundColor(getResources().getColor(R.color.button_pressed, getTheme()));
         lastActiveOperandButton = button;
@@ -111,24 +118,25 @@ public class MainActivity extends AppCompatActivity {
 
         String operation = button.getText().toString();
 
+        // если меняем операнд, не изменяя числа ( [+] -> [*] например), не применяем дейсвие
+        if (isShownResult) {
+            lastOperation = operation;
+            return;
+        }
+
+        isShownResult = true;
+
         if ((Objects.equals(operation, "*") && resultNum.toString().length() > 4)
-                || (Objects.equals(operation, "+") && resultNum.toString().length() > 7)
-                || resultNum >= 9999999) {
+                || (Objects.equals(operation, "+") && resultNum.toString().length() > 5)) {
             powerButtons(false, true);
             findViewById(R.id.button_multiply).setEnabled(false);
             findViewById(R.id.button_plus).setEnabled(false);
         } else {
             powerButtons(true, true);
+            findViewById(R.id.button_multiply).setEnabled(true);
+            findViewById(R.id.button_plus).setEnabled(true);
+        }
 
-        }
-        // если меняем операнд, не изменяя числа ( [+] -> [*] например), не применяем дейсвие
-        if (isShownResult && getNumFromField() != 0.0) {
-            lastOperation = operation;
-            if (!Objects.equals(operation, "+") && !Objects.equals(operation, "*")&& (getNumFromField() <= 99999999))
-                powerButtons(true, true);
-            return;
-        }
-        isShownResult = true;
 
         String number = resultField.getText().toString();
 
@@ -137,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 performOperation(Double.valueOf(number));
             } catch (NumberFormatException ex) {
-                resultField.setText("");
+                resultField.setText("-0");
             }
             lastOperation = operation;
         }
@@ -182,14 +190,20 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        String result = resultNum.toString().replace('.', ',');
+
         if (resultNum.intValue() == resultNum) {
             resultField.setText(String.valueOf(resultNum.intValue()));
+        } else {
+            DecimalFormat formatter = new DecimalFormat("#.####");
+            String result = formatter.format(resultNum);
+            if(!resultNum.toString().replace(".",",").equals(result))
+                result="≈"+result;
+            resultField.setText(result);
         }
-        dotButton.setEnabled(!result.contains(","));
         isShownResult = true;
     }
 
+    // изменяет активность группы кнопок
     private void powerButtons(boolean buttonsEnabled, boolean numericOnly) {
         findViewById(R.id.button0).setEnabled(buttonsEnabled);
         findViewById(R.id.button1).setEnabled(buttonsEnabled);
