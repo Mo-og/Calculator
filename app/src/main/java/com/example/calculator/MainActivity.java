@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     public void onDot(View view) {
         dotButton.setEnabled(false);
         resultField.append(",");
+        isShownResult=false;
     }
 
 
